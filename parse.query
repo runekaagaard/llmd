@@ -1,0 +1,5 @@
+(atx_heading
+  (atx_h2_marker) 
+  (heading_content) @section_name
+) @atx_h2_marker
+

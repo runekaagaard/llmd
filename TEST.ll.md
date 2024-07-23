@@ -16,6 +16,11 @@ Test the LLMD parser with minimal content.
 print("Hello, World!")
 ```
 
+### test.js
+```javascript
+console.log("Hello, World!")
+```
+
 ## Changelog
 
 - Created minimal TEST.ll.md file

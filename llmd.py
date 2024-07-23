@@ -9,55 +9,36 @@ LANGUAGES = {"py": "python", "css": "css", "js": "javascript", "jsx": "javascrip
 @app.command()
 def run(filepath: str) -> None:
     parsed = parse(filepath)
-    print(f"Project Title: {parsed['project_title']}")
-    print("\nSections:")
-    for section, content in parsed['sections'].items():
-        print(f"\n{section}:")
-        print(content[:100] + "..." if len(content) > 100 else content)
+    import json
+    print(json.dumps(parsed, indent=4))
 
 def parse(filepath: str) -> dict:
-    with open(filepath, 'r') as file:
-        content = file.read()
+    result, level = {}, 0
+    inner_result = result
+    stack = []
 
-    language = get_language('markdown')
-    parser = get_parser('markdown')
-    tree = parser.parse(bytes(content, 'utf8'))
-    print(tree.root_node.sexp())
+    with open(filepath, 'r') as f:
+        for line in f.readlines():
+            if line.startswith("#"):
+                hashtags, title = line.strip().split(" ", 1)
+                assert title != "text"
+                new_level = len(hashtags)
 
-    with open('parse.query', 'r') as query_file:
-        query_string = query_file.read()
+                if stack and new_level <= level:
+                    for _ in range(level - new_level + 1):
+                        stack.pop()
 
-    query = language.query(query_string)
+                if stack:
+                    inner_result = stack[-1]
 
-    captures = query.captures(tree.root_node)
+                inner_result[title] = {"text": ""}
+                stack.append(inner_result[title])
+                level = new_level
+            else:
 
-    result = {"project_title": "", "sections": {}}
-
-    current_section = ""
-    section_content = ""
-
-    for capture in captures:
-        node, capture_name = capture
-        text = content[node.start_byte:node.end_byte].strip()
-
-        if capture_name == "project":
-            result["project_title"] = text.split("Project:", 1)[1].strip()
-        elif capture_name == "section_name":
-            if current_section:
-                result["sections"][current_section] = section_content.strip()
-            current_section = text
-            section_content = ""
-        else:
-            section_content += text + "\n"
-
-    if current_section:
-        result["sections"][current_section] = section_content.strip()
+                stack[-1]["text"] += line
 
     return result
 
 if __name__ == "__main__":
     app()
-
-# Suppress the FutureWarning
-import warnings
-warnings.filterwarnings("ignore", category=FutureWarning)
