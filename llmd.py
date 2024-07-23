@@ -37,7 +37,7 @@ def parse(filepath: str) -> dict:
         text = content[node.start_byte:node.end_byte].strip()
 
         if capture_name == "project":
-            result["project"] = text.replace("Project:", "").strip()
+            result["project"] = text.split("Project:", 1)[1].strip()
         elif capture_name == "section_name":
             current_section = text
         elif capture_name == "mission" and current_section == "Mission":
@@ -66,3 +66,7 @@ def parse(filepath: str) -> dict:
 
 if __name__ == "__main__":
     app()
+
+# Suppress the FutureWarning
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
