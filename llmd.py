@@ -18,6 +18,7 @@ def parse(filepath: str) -> dict:
     language = get_language('markdown')
     parser = get_parser('markdown')
     tree = parser.parse(bytes(content, 'utf8'))
+    print(tree.root_node.sexp())
 
     query = language.query("""
     (atx_heading
@@ -57,13 +58,7 @@ def parse(filepath: str) -> dict:
 
     captures = query.captures(tree.root_node)
 
-    result = {
-        "project": "",
-        "mission": "",
-        "code_context": {},
-        "changelog": [],
-        "conversation": []
-    }
+    result = {"project": "", "mission": "", "code_context": {}, "changelog": [], "conversation": []}
 
     current_entry = {}
     for capture in captures:
@@ -88,3 +83,6 @@ def parse(filepath: str) -> dict:
             current_entry = {}
 
     return result
+
+if __name__ == "__main__":
+    app()
