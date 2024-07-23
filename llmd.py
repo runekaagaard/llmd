@@ -1,16 +1,10 @@
-import mimetypes, os, sys, warnings
-from tree_sitter_languages import get_language, get_parser
 import typer
 
 app = typer.Typer()
 
-LANGUAGES = {"py": "python", "css": "css", "js": "javascript", "jsx": "javascript", "md": "markdown"}
-
 @app.command()
 def run(filepath: str) -> None:
     parsed = parse(filepath)
-    import json
-    print(json.dumps(parsed, indent=4))
 
 def parse(filepath: str) -> dict:
     result, level = {}, 0
@@ -40,5 +34,22 @@ def parse(filepath: str) -> dict:
 
     return result
 
+def unparse(data: dict) -> str:
+    def traverse(d, level=0):
+        result = ""
+        for key, value in d.items():
+            if key != "text":
+                result += f"{'#' * (level + 1)} {key}\n"
+                result += value.get("text", "")
+                result += traverse(value, level + 1)
+        return result
+
+    return traverse(data)
+
+def test_unparse():
+    with open("EXAMPLE.ll.md") as f:
+        assert f.read() == unparse(parse("EXAMPLE.ll.md"))
+
 if __name__ == "__main__":
+    test_unparse()
     app()
