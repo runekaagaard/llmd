@@ -9,7 +9,11 @@ LANGUAGES = {"py": "python", "css": "css", "js": "javascript", "jsx": "javascrip
 @app.command()
 def run(filepath: str) -> None:
     parsed = parse(filepath)
-    print(parsed)
+    print(f"Project Title: {parsed['project_title']}")
+    print("\nSections:")
+    for section, content in parsed['sections'].items():
+        print(f"\n{section}:")
+        print(content[:100] + "..." if len(content) > 100 else content)
 
 def parse(filepath: str) -> dict:
     with open(filepath, 'r') as file:
@@ -27,40 +31,27 @@ def parse(filepath: str) -> dict:
 
     captures = query.captures(tree.root_node)
 
-    result = {"project": "", "mission": "", "code_context": {}, "changelog": [], "conversation": []}
+    result = {"project_title": "", "sections": {}}
 
     current_section = ""
-    current_filename = ""
-    current_entry = {}
+    section_content = ""
+
     for capture in captures:
         node, capture_name = capture
         text = content[node.start_byte:node.end_byte].strip()
 
         if capture_name == "project":
-            result["project"] = text.split("Project:", 1)[1].strip()
+            result["project_title"] = text.split("Project:", 1)[1].strip()
         elif capture_name == "section_name":
+            if current_section:
+                result["sections"][current_section] = section_content.strip()
             current_section = text
-        elif capture_name == "mission" and current_section == "Mission":
-            result["mission"] = text
-        elif capture_name == "filename":
-            current_filename = text
-        elif capture_name == "code_block" and current_section == "Code Context":
-            result["code_context"][current_filename] = text
-        elif capture_name == "changelog_item" and current_section == "Changelog":
-            result["changelog"].append(text.lstrip("- "))
-        elif capture_name == "speaker" and current_section == "Conversation Thread":
-            speaker = text.strip("*")
-            if speaker == "Human":
-                current_entry = {"human": ""}
-            elif speaker == "Assistant":
-                current_entry["assistant"] = ""
-        elif capture_name == "message" and current_section == "Conversation Thread":
-            if "human" in current_entry and not current_entry["human"]:
-                current_entry["human"] = text.strip()
-            elif "assistant" in current_entry:
-                current_entry["assistant"] = text.strip()
-                result["conversation"].append(current_entry)
-                current_entry = {}
+            section_content = ""
+        else:
+            section_content += text + "\n"
+
+    if current_section:
+        result["sections"][current_section] = section_content.strip()
 
     return result
 
