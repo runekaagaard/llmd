@@ -24,36 +24,18 @@ def parse(filepath: str) -> dict:
     (atx_heading
       (atx_h1_marker)
       (heading_content) @project (#match? @project "^Project:"))
-    (section
-      (atx_heading
-        (atx_h2_marker)
-        (heading_content) @section_name)
-      (paragraph) @mission (#eq? @section_name "Mission"))
-    (section
-      (atx_heading
-        (atx_h2_marker)
-        (heading_content) @section_name)
-      (section
-        (atx_heading
-          (atx_h3_marker)
-          (heading_content) @filename)
-        (fenced_code_block) @code_block) (#eq? @section_name "Code Context"))
-    (section
-      (atx_heading
-        (atx_h2_marker)
-        (heading_content) @section_name)
-      (list
-        (list_item) @changelog_item) (#eq? @section_name "Changelog"))
-    (section
-      (atx_heading
-        (atx_h2_marker)
-        (heading_content) @section_name)
-      (section
-        (atx_heading
-          (atx_h3_marker)
-          (heading_content) @entry_number)
-        (paragraph) @human
-        (paragraph) @assistant) (#eq? @section_name "Conversation Thread"))
+    (atx_heading
+      (atx_h2_marker)
+      (heading_content) @section_name)
+    (paragraph) @mission (#eq? @section_name "Mission")
+    (atx_heading
+      (atx_h3_marker)
+      (heading_content) @filename)
+    (fenced_code_block) @code_block (#eq? @section_name "Code Context")
+    (list_item) @changelog_item (#eq? @section_name "Changelog")
+    (paragraph
+      (strong_emphasis) @speaker
+      (text) @message) (#eq? @section_name "Conversation Thread")
     """)
 
     captures = query.captures(tree.root_node)
