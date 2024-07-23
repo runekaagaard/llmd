@@ -20,23 +20,10 @@ def parse(filepath: str) -> dict:
     tree = parser.parse(bytes(content, 'utf8'))
     print(tree.root_node.sexp())
 
-    query = language.query("""
-    (atx_heading
-      (atx_h1_marker)
-      (heading_content) @project (#match? @project "^Project:"))
-    (atx_heading
-      (atx_h2_marker)
-      (heading_content) @section_name)
-    (paragraph) @mission (#eq? @section_name "Mission")
-    (atx_heading
-      (atx_h3_marker)
-      (heading_content) @filename)
-    (fenced_code_block) @code_block (#eq? @section_name "Code Context")
-    (list_item) @changelog_item
-    (paragraph
-      (strong_emphasis) @speaker
-      (text) @message) (#eq? @section_name "Conversation Thread")
-    """)
+    with open('parse.query', 'r') as query_file:
+        query_string = query_file.read()
+
+    query = language.query(query_string)
 
     captures = query.captures(tree.root_node)
 
@@ -79,3 +66,6 @@ def parse(filepath: str) -> dict:
 
 if __name__ == "__main__":
     app()
+<<<<<< CHANGELOG
+Moved query string to separate file parse.query for better maintainability
+>>>>>> CHANGELOG
