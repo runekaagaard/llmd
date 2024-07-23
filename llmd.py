@@ -1,3 +1,6 @@
+import re, json
+from typing import List, Tuple, Optional
+
 import typer
 
 app = typer.Typer()
@@ -5,6 +8,8 @@ app = typer.Typer()
 @app.command()
 def run(filepath: str) -> None:
     parsed = parse(filepath)
+    functions = parse_functions(open(filepath, 'r').read())
+    print(json.dumps(functions, indent=4))
 
 def parse(filepath: str) -> dict:
     result, level = {}, 0
@@ -49,6 +54,11 @@ def unparse(data: dict) -> str:
 def test_unparse():
     with open("EXAMPLE.ll.md") as f:
         assert f.read() == unparse(parse("EXAMPLE.ll.md"))
+
+def parse_functions(content: str) -> List[Tuple[str, Optional[str], str, Optional[str]]]:
+    pattern = r'<<<<<< (.*?)\n(.*?)\n(?:=======\n(.*?)\n)?>>>>>> (.*?)(?:\n|$)'
+    matches = re.findall(pattern, content, re.DOTALL)
+    return [(m[0], m[3] if m[3] != m[0] else None, m[1], m[2] if '=======' in m[1] else None) for m in matches]
 
 if __name__ == "__main__":
     test_unparse()
