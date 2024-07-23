@@ -66,6 +66,3 @@ def parse(filepath: str) -> dict:
 
 if __name__ == "__main__":
     app()
-<<<<<< CHANGELOG
-Moved query string to separate file parse.query for better maintainability
->>>>>> CHANGELOG
