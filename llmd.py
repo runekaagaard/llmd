@@ -8,7 +8,7 @@ app = typer.Typer()
 @app.command()
 def run(filepath: str) -> None:
     parsed = parse(filepath)
-    functions = parse_functions(open(filepath, 'r').read())
+    functions = parse_functions(parsed["Project: Simple Todo App"]["Conversation Thread"]["Entry 2"]["text"])
     print(json.dumps(functions, indent=4))
 
 def parse(filepath: str) -> dict:
@@ -51,14 +51,14 @@ def unparse(data: dict) -> str:
 
     return traverse(data)
 
-def test_unparse():
-    with open("EXAMPLE.ll.md") as f:
-        assert f.read() == unparse(parse("EXAMPLE.ll.md"))
-
 def parse_functions(content: str) -> List[Tuple[str, Optional[str], str, Optional[str]]]:
     pattern = r'<<<<<< (.*?)\n(.*?)\n(?:=======\n(.*?)\n)?>>>>>> (.*?)(?:\n|$)'
     matches = re.findall(pattern, content, re.DOTALL)
     return [(m[0], m[3] if m[3] != m[0] else None, m[1], m[2] if '=======' in m[1] else None) for m in matches]
+
+def test_unparse():
+    with open("EXAMPLE.ll.md") as f:
+        assert f.read() == unparse(parse("EXAMPLE.ll.md"))
 
 if __name__ == "__main__":
     test_unparse()
