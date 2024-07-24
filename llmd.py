@@ -66,13 +66,16 @@ def apply_functions(document: dict, project_title: str, functions: List[Tuple[st
         function_names = (function_name_start, function_name_end)
         print(function_names)
         if function_names == ("SEARCH", "REPLACE"):
-            # assert input_a in document[project_title]["Code Context"][filepath]["text"], "SEARCH string not found."
-            document[project_title]["Code Context"][filepath]["text"].replace(input_a, input_b)
+            if filepath not in document[project_title]["Code Context"]:
+                document[project_title]["Code Context"][filepath] = {"text": ""}
+            document[project_title]["Code Context"][filepath]["text"] = document[project_title]["Code Context"][filepath]["text"].replace(input_a, input_b)
         elif function_names == ("SEARCH_MISSION", "REPLACE_MISSION"):
             assert input_a in document[project_title]["Mission"]["text"], "SEARCH_MISSION string not found."
-            document[project_title]["Mission"]["text"].replace(input_a, input_b)
+            document[project_title]["Mission"]["text"] = document[project_title]["Mission"]["text"].replace(input_a, input_b)
         elif function_names == ("CHANGELOG", None):
-            kofkwokef
+            if "Changelog" not in document[project_title]:
+                document[project_title]["Changelog"] = {"text": ""}
+            document[project_title]["Changelog"]["text"] += f"- {input_a}\n"
 
     return document
 
