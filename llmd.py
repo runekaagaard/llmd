@@ -56,9 +56,9 @@ def unparse_markdown(data: dict) -> str:
     return traverse(data)
 
 def parse_functions(content: str) -> List[Tuple[str, str, str, str, Optional[str]]]:
-    pattern = r'([^\n]*)\n<<<<<< (.*?)\n(.*?)\n=======\n(.*?)\n>>>>>> (.*?)(?:\n|$)'
+    pattern = r'(?:([^\n]+)\n)?<<<<<< (.*?)\n(.*?)\n(?:=======\n(.*?)\n)?>>>>>> (.*?)(?:\n|$)'
     matches = re.findall(pattern, content, re.DOTALL)
-    return [(m[0].strip() or None, m[1], m[2], m[4], m[3]) for m in matches]
+    return [(m[0].strip() or None, m[1], m[2], m[4], m[3] if m[3] else None) for m in matches]
 
 def apply_functions(document: dict, project_title: str, functions: List[Tuple[str, str, str, str,
                                                                               Optional[str]]]) -> dict:
@@ -88,3 +88,4 @@ if __name__ == "__main__":
 # - Updated parse_functions to capture filenames and fix replace string handling
 # - Modified run function to display detailed parsed function information
 # - Fixed parse_functions to only match a single line above search blocks
+# - Updated parse_functions to correctly handle CHANGELOG and SEARCH_MISSION/REPLACE_MISSION blocks
