@@ -10,7 +10,7 @@ def run(filepath: str) -> None:
     parsed = parse(filepath)
     conversation_text = parsed["Project: Simple Todo App"]["Conversation Thread"]["Entry 2"]["text"]
     functions = parse_functions(conversation_text)
-    
+
     print("Parsed functions:")
     for func in functions:
         print(f"File: {func[0]}")
