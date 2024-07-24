@@ -72,7 +72,7 @@ def test_unparse():
 if __name__ == "__main__":
     test_unparse()
     app()
-<<<<<< CHANGELOG
-- Updated parse_functions to capture filenames and fix replace string handling
-- Modified run function to display detailed parsed function information
->>>>>> CHANGELOG
+
+# Changelog:
+# - Updated parse_functions to capture filenames and fix replace string handling
+# - Modified run function to display detailed parsed function information
