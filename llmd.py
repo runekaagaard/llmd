@@ -8,6 +8,8 @@ import openai
 
 app = typer.Typer()
 
+__all__ = ['parse_markdown', 'unparse_markdown']
+
 # Set up OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -126,3 +128,8 @@ def test_unparse_markdown():
 if __name__ == "__main__":
     test_unparse_markdown()
     app()
+<<<<<< CHANGELOG
+Added unit tests for parse_markdown and unparse_markdown functions
+- Created tests/test_parsing.py with TestParsing class
+- Updated llmd.py to make parse_markdown and unparse_markdown available for import
+>>>>>> CHANGELOG
