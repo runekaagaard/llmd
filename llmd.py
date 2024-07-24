@@ -7,20 +7,15 @@ app = typer.Typer()
 
 @app.command()
 def run(filepath: str) -> None:
-    parsed = parse(filepath)
-    conversation_text = parsed["Project: Simple Todo App"]["Conversation Thread"]["Entry 2"]["text"]
+    document = parse_markdown(filepath)
+    project_key = list(document.keys())[0]
+    conversation_text = document[project_key]["Conversation Thread"]["Entry 2"]["text"]
     functions = parse_functions(conversation_text)
+    document = apply_functions(document, project_key, functions)
 
-    print("Parsed functions:")
-    for func in functions:
-        print(f"File: {func[0]}")
-        print(f"Search type: {func[1]}")
-        print(f"Search content:\n{func[2]}")
-        print(f"Replace type: {func[3]}")
-        print(f"Replace content:\n{func[4] if func[4] is not None else 'None'}")
-        print("-" * 50)
+    print(json.dumps(functions, indent=4))
 
-def parse(filepath: str) -> dict:
+def parse_markdown(filepath: str) -> dict:
     result, level = {}, 0
     inner_result = result
     stack = []
@@ -48,7 +43,7 @@ def parse(filepath: str) -> dict:
 
     return result
 
-def unparse(data: dict) -> str:
+def unparse_markdown(data: dict) -> str:
     def traverse(d, level=0):
         result = ""
         for key, value in d.items():
@@ -63,14 +58,30 @@ def unparse(data: dict) -> str:
 def parse_functions(content: str) -> List[Tuple[str, str, str, str, Optional[str]]]:
     pattern = r'([^\n]*)\n<<<<<< (.*?)\n(.*?)\n=======\n(.*?)\n>>>>>> (.*?)(?:\n|$)'
     matches = re.findall(pattern, content, re.DOTALL)
-    return [(m[0].strip(), m[1], m[2], m[4], m[3]) for m in matches]
+    return [(m[0].strip() or None, m[1], m[2], m[4], m[3]) for m in matches]
 
-def test_unparse():
+def apply_functions(document: dict, project_title: str, functions: List[Tuple[str, str, str, str,
+                                                                              Optional[str]]]) -> dict:
+    for filepath, function_name_start, input_a, function_name_end, input_b in functions:
+        function_names = (function_name_start, function_name_end)
+        print(function_names)
+        if function_names == ("SEARCH", "REPLACE"):
+            # assert input_a in document[project_title]["Code Context"][filepath]["text"], "SEARCH string not found."
+            document[project_title]["Code Context"][filepath]["text"].replace(input_a, input_b)
+        elif function_names == ("SEARCH_MISSION", "REPLACE_MISSION"):
+            assert input_a in document[project_title]["Mission"]["text"], "SEARCH_MISSION string not found."
+            document[project_title]["Mission"]["text"].replace(input_a, input_b)
+        elif function_names == ("CHANGELOG", None):
+            kofkwokef
+
+    return document
+
+def test_unparse_markdown():
     with open("EXAMPLE.ll.md") as f:
-        assert f.read() == unparse(parse("EXAMPLE.ll.md"))
+        assert f.read() == unparse_markdown(parse_markdown("EXAMPLE.ll.md"))
 
 if __name__ == "__main__":
-    test_unparse()
+    test_unparse_markdown()
     app()
 
 # Changelog:
