@@ -61,7 +61,7 @@ def unparse(data: dict) -> str:
     return traverse(data)
 
 def parse_functions(content: str) -> List[Tuple[str, str, str, str, Optional[str]]]:
-    pattern = r'(.*?)\n<<<<<< (.*?)\n(.*?)\n=======\n(.*?)\n>>>>>> (.*?)(?:\n|$)'
+    pattern = r'([^\n]*)\n<<<<<< (.*?)\n(.*?)\n=======\n(.*?)\n>>>>>> (.*?)(?:\n|$)'
     matches = re.findall(pattern, content, re.DOTALL)
     return [(m[0].strip(), m[1], m[2], m[4], m[3]) for m in matches]
 
@@ -76,3 +76,4 @@ if __name__ == "__main__":
 # Changelog:
 # - Updated parse_functions to capture filenames and fix replace string handling
 # - Modified run function to display detailed parsed function information
+# - Fixed parse_functions to only match a single line above search blocks
