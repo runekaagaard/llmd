@@ -64,17 +64,15 @@ def apply_functions(document: dict, project_title: str, functions: List[Tuple[st
                                                                               Optional[str]]]) -> dict:
     for filepath, function_name_start, input_a, function_name_end, input_b in functions:
         function_names = (function_name_start, function_name_end)
-        print(function_names)
         if function_names == ("SEARCH", "REPLACE"):
-            if filepath not in document[project_title]["Code Context"]:
-                document[project_title]["Code Context"][filepath] = {"text": ""}
-            document[project_title]["Code Context"][filepath]["text"] = document[project_title]["Code Context"][filepath]["text"].replace(input_a, input_b)
+            # assert input_a in document[project_title]["Code Context"][filepath]["text"], "SEARCH string not found."
+            document[project_title]["Code Context"][filepath]["text"] = document[project_title]["Code Context"][
+                filepath]["text"].replace(input_a, input_b)
         elif function_names == ("SEARCH_MISSION", "REPLACE_MISSION"):
             assert input_a in document[project_title]["Mission"]["text"], "SEARCH_MISSION string not found."
-            document[project_title]["Mission"]["text"] = document[project_title]["Mission"]["text"].replace(input_a, input_b)
+            document[project_title]["Mission"]["text"] = document[project_title]["Mission"]["text"].replace(
+                input_a, input_b)
         elif function_names == ("CHANGELOG", None):
-            if "Changelog" not in document[project_title]:
-                document[project_title]["Changelog"] = {"text": ""}
             document[project_title]["Changelog"]["text"] += f"- {input_a}\n"
 
     return document
@@ -86,9 +84,3 @@ def test_unparse_markdown():
 if __name__ == "__main__":
     test_unparse_markdown()
     app()
-
-# Changelog:
-# - Updated parse_functions to capture filenames and fix replace string handling
-# - Modified run function to display detailed parsed function information
-# - Fixed parse_functions to only match a single line above search blocks
-# - Updated parse_functions to correctly handle CHANGELOG and SEARCH_MISSION/REPLACE_MISSION blocks
