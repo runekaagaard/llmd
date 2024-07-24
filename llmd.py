@@ -8,8 +8,6 @@ import openai
 
 app = typer.Typer()
 
-__all__ = ['parse_markdown', 'unparse_markdown']
-
 # Set up OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -64,7 +62,7 @@ def parse_markdown(filepath: str) -> dict:
         if key == "text":
             continue
         i, human, assistant = -1, "", ""
-        for line in content["text"].split("\n"):
+        for line in content["text"].splitlines():
             if line.startswith("**Human:**"):
                 human += line.replace("**Human:**", "")
                 i = 0
@@ -73,9 +71,9 @@ def parse_markdown(filepath: str) -> dict:
                 i = 1
             else:
                 if i == 0:
-                    human += line
+                    human += line + "\n"
                 elif i == 1:
-                    assistant += line
+                    assistant += line + "\n"
 
         if human:
             messages.append({"role": "user", "content": human})
@@ -84,15 +82,18 @@ def parse_markdown(filepath: str) -> dict:
 
     result[project_key]["Conversation Thread"] = messages
 
-    print(messages)
-
     return result
 
 def unparse_markdown(data: dict) -> str:
     def traverse(d, level=0):
         result = ""
         for key, value in d.items():
-            if key != "text":
+            if key == "Conversation Thread":
+                result += f"{'#' * (level + 1)} {key}\n"
+                for message in value:
+                    role = "Human" if message["role"] == "user" else "Assistant"
+                    result += f"**{role}:** {message['content']}\n\n"
+            elif key != "text":
                 result += f"{'#' * (level + 1)} {key}\n"
                 result += value.get("text", "")
                 result += traverse(value, level + 1)
