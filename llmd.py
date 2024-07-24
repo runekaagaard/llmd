@@ -126,9 +126,3 @@ def test_unparse_markdown():
 if __name__ == "__main__":
     test_unparse_markdown()
     app()
-<<<<<< CHANGELOG
-Added query_ai function to interact with OpenAI API
-- Implemented query_ai function to prepare and send requests to OpenAI
-- Updated run function to use query_ai and display AI responses
-- Added OpenAI API key setup using environment variable
->>>>>> CHANGELOG
