@@ -22,14 +22,15 @@ def run(filepath: str) -> None:
     document = apply_functions(document, project_key, functions)
 
     # Query AI and print the response
-    ai_response = query_ai(document)
-    print("AI Response:")
-    print(ai_response)
+    # ai_response = query_ai(document)
+    # print("AI Response:")
+    # print(ai_response)
 
     print("\nParsed functions:")
     print(json.dumps(functions, indent=4))
 
 def parse_markdown(filepath: str) -> dict:
+    # Markdown to dict
     result, level = {}, 0
     inner_result = result
     stack = []
@@ -54,6 +55,36 @@ def parse_markdown(filepath: str) -> dict:
             else:
 
                 stack[-1]["text"] += line
+
+    # Parse conversation thread
+    project_key = list(result.keys())[0]
+    messages = []
+
+    for key, content in result[project_key]["Conversation Thread"].items():
+        if key == "text":
+            continue
+        i, human, assistant = -1, "", ""
+        for line in content["text"].split("\n"):
+            if line.startswith("**Human:**"):
+                human += line.replace("**Human:**", "")
+                i = 0
+            elif line.startswith("**Assistant:**"):
+                assistant += line.replace("**Assistant:**", "")
+                i = 1
+            else:
+                if i == 0:
+                    human += line
+                elif i == 1:
+                    assistant += line
+
+        if human:
+            messages.append({"role": "user", "content": human})
+        if assistant:
+            messages.append({"role": "assistant", "content": assistant})
+
+    result[project_key]["Conversation Thread"] = messages
+
+    print(messages)
 
     return result
 
@@ -93,13 +124,13 @@ def apply_functions(document: dict, project_title: str, functions: List[Tuple[st
 
 def query_ai(document: dict) -> str:
     project_key = list(document.keys())[0]
-    
+
     # Prepare system message
     system_message = ""
     for key, value in document[project_key].items():
         if key != "Conversation Thread":
             system_message += f"# {key}\n\n{value['text']}\n\n"
-    
+
     # Prepare conversation messages
     messages = [{"role": "system", "content": system_message}]
     conversation_thread = document[project_key]["Conversation Thread"]
@@ -107,18 +138,15 @@ def query_ai(document: dict) -> str:
         if entry_key != "text":
             human_message = entry_value.get("Human", {}).get("text", "")
             assistant_message = entry_value.get("Assistant", {}).get("text", "")
-            
+
             if human_message:
                 messages.append({"role": "user", "content": human_message})
             if assistant_message:
                 messages.append({"role": "assistant", "content": assistant_message})
-    
+
     # Send request to OpenAI API
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=messages
-    )
-    
+    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
+
     return response.choices[0].message['content']
 
 def test_unparse_markdown():
