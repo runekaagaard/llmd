@@ -88,11 +88,9 @@ def unparse_markdown(data: dict) -> str:
         for key, value in d.items():
             if key == "Conversation Thread":
                 result += f"{'#' * (level + 1)} {key}"
-                j = 0
                 for i, message in enumerate(value):
                     if i % 2 == 0:
-                        j += 1
-                        result += f"\n\n### Entry {j}"
+                        result += f"\n\n### Entry {i // 2 + 1}"
                     role = "Human" if message["role"] == "user" else "Assistant"
                     result += f"\n\n**{role}:** {message['content'].strip()}"
             elif key != "text":
