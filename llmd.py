@@ -153,9 +153,6 @@ def query_ai(document: dict) -> str:
 def test_unparse_markdown():
     with open("EXAMPLE.ll.md") as f:
         unparsed = unparse_markdown(parse_markdown("EXAMPLE.ll.md"))
-        print(unparsed)
-        with open("x", "w") as g:
-            g.write(unparsed)
         assert f.read() == unparsed
 
 if __name__ == "__main__":
