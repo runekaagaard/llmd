@@ -1,29 +1,19 @@
-import re
-import json
-import os
+import re, json, os
 from typing import List, Tuple, Optional
 
 import typer
-import openai
+from litellm import completion
 
-app = typer.Typer()
-
-# Set up OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+app = typer.Typer(pretty_exceptions_enable=False)  # pretty_exceptions_show_locals = False
 
 @app.command()
 def run(filepath: str) -> None:
     document = parse_markdown(filepath)
     project_key = list(document.keys())[0]
-    # conversation_text = document[project_key]["Conversation Thread"]["Entry 2"]["text"]
-    # functions = parse_functions(conversation_text)
-    # document = apply_functions(document, project_key, functions)
-    # Query AI and print the response
-    # ai_response = query_ai(document)
-    # print("AI Response:")
-    # print(ai_response)
-    # print("\nParsed functions:")
-    # print(json.dumps(functions, indent=4))
+    response = query_ai(document)
+    document[project_key]["Conversation Thread"].append({"role": "assistant", "content": response})
+    with open("new.ll.md", "w") as f:
+        f.write(unparse_markdown(document))
 
 def parse_markdown(filepath: str) -> dict:
     # Markdown to dict
@@ -126,29 +116,12 @@ def apply_functions(document: dict, project_title: str, functions: List[Tuple[st
 def query_ai(document: dict) -> str:
     project_key = list(document.keys())[0]
 
-    # Prepare system message
-    system_message = ""
-    for key, value in document[project_key].items():
-        if key != "Conversation Thread":
-            system_message += f"# {key}\n\n{value['text']}\n\n"
+    system_message = unparse_markdown({k: v for k, v in document.items() if k != "Conversation Thread"})
+    messages = [{"role": "system", "content": system_message}] + document[project_key]["Conversation Thread"]
 
-    # Prepare conversation messages
-    messages = [{"role": "system", "content": system_message}]
-    conversation_thread = document[project_key]["Conversation Thread"]
-    for entry_key, entry_value in conversation_thread.items():
-        if entry_key != "text":
-            human_message = entry_value.get("Human", {}).get("text", "")
-            assistant_message = entry_value.get("Assistant", {}).get("text", "")
+    response = completion(model="claude-3-5-sonnet-20240620", messages=messages)
 
-            if human_message:
-                messages.append({"role": "user", "content": human_message})
-            if assistant_message:
-                messages.append({"role": "assistant", "content": assistant_message})
-
-    # Send request to OpenAI API
-    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
-
-    return response.choices[0].message['content']
+    return response.choices[0].message.content
 
 def test_unparse_markdown():
     with open("EXAMPLE.ll.md") as f:
