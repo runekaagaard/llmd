@@ -15,17 +15,15 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 def run(filepath: str) -> None:
     document = parse_markdown(filepath)
     project_key = list(document.keys())[0]
-    conversation_text = document[project_key]["Conversation Thread"]["Entry 2"]["text"]
-    functions = parse_functions(conversation_text)
-    document = apply_functions(document, project_key, functions)
-
+    # conversation_text = document[project_key]["Conversation Thread"]["Entry 2"]["text"]
+    # functions = parse_functions(conversation_text)
+    # document = apply_functions(document, project_key, functions)
     # Query AI and print the response
     # ai_response = query_ai(document)
     # print("AI Response:")
     # print(ai_response)
-
-    print("\nParsed functions:")
-    print(json.dumps(functions, indent=4))
+    # print("\nParsed functions:")
+    # print(json.dumps(functions, indent=4))
 
 def parse_markdown(filepath: str) -> dict:
     # Markdown to dict
@@ -64,10 +62,10 @@ def parse_markdown(filepath: str) -> dict:
         i, human, assistant = -1, "", ""
         for line in content["text"].splitlines():
             if line.startswith("**Human:**"):
-                human += line.replace("**Human:**", "")
+                human += line.replace("**Human:**", "") + "\n"
                 i = 0
             elif line.startswith("**Assistant:**"):
-                assistant += line.replace("**Assistant:**", "")
+                assistant += line.replace("**Assistant:**", "") + "\n"
                 i = 1
             else:
                 if i == 0:
@@ -89,17 +87,21 @@ def unparse_markdown(data: dict) -> str:
         result = ""
         for key, value in d.items():
             if key == "Conversation Thread":
-                result += f"{'#' * (level + 1)} {key}\n"
-                for message in value:
+                result += f"{'#' * (level + 1)} {key}"
+                j = 0
+                for i, message in enumerate(value):
+                    if i % 2 == 0:
+                        j += 1
+                        result += f"\n\n### Entry {j}"
                     role = "Human" if message["role"] == "user" else "Assistant"
-                    result += f"**{role}:** {message['content']}\n\n"
+                    result += f"\n\n**{role}:** {message['content'].strip()}"
             elif key != "text":
                 result += f"{'#' * (level + 1)} {key}\n"
                 result += value.get("text", "")
                 result += traverse(value, level + 1)
         return result
 
-    return traverse(data)
+    return traverse(data) + "\n"
 
 def parse_functions(content: str) -> List[Tuple[str, str, str, str, Optional[str]]]:
     pattern = r'(?:([^\n]+)\n)?<<<<<< (.*?)\n(.*?)\n(?:=======\n(.*?)\n)?>>>>>> (.*?)(?:\n|$)'
@@ -152,7 +154,11 @@ def query_ai(document: dict) -> str:
 
 def test_unparse_markdown():
     with open("EXAMPLE.ll.md") as f:
-        assert f.read() == unparse_markdown(parse_markdown("EXAMPLE.ll.md"))
+        unparsed = unparse_markdown(parse_markdown("EXAMPLE.ll.md"))
+        print(unparsed)
+        with open("x", "w") as g:
+            g.write(unparsed)
+        assert f.read() == unparsed
 
 if __name__ == "__main__":
     test_unparse_markdown()
