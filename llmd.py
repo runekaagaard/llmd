@@ -12,6 +12,8 @@ def run(filepath: str) -> None:
     project_key = list(document.keys())[0]
     response = query_ai(document)
     document[project_key]["Conversation Thread"].append({"role": "assistant", "content": response})
+    functions = parse_functions(response)
+    document = apply_functions(document, functions)
     with open("new.ll.md", "w") as f:
         f.write(unparse_markdown(document))
 
@@ -21,26 +23,31 @@ def parse_markdown(filepath: str) -> dict:
     inner_result = result
     stack = []
 
-    with open(filepath, 'r') as f:
-        for line in f.readlines():
-            if line.startswith("#"):
-                hashtags, title = line.strip().split(" ", 1)
-                assert title != "text"
-                new_level = len(hashtags)
+    from jinja2 import Environment, FileSystemLoader
+    env = Environment(loader=FileSystemLoader([os.path.dirname(filepath), 'templates']))
+    # Load and render a template
+    template = env.get_template(os.path.basename(filepath))
+    rendered = template.render()
 
-                if stack and new_level <= level:
-                    for _ in range(level - new_level + 1):
-                        stack.pop()
+    for line in rendered.splitlines():
+        if line.startswith("#"):
+            hashtags, title = line.strip().split(" ", 1)
+            assert title != "text"
+            new_level = len(hashtags)
 
-                if stack:
-                    inner_result = stack[-1]
+            if stack and new_level <= level:
+                for _ in range(level - new_level + 1):
+                    stack.pop()
 
-                inner_result[title] = {"text": ""}
-                stack.append(inner_result[title])
-                level = new_level
-            else:
+            if stack:
+                inner_result = stack[-1]
 
-                stack[-1]["text"] += line
+            inner_result[title] = {"text": ""}
+            stack.append(inner_result[title])
+            level = new_level
+        else:
+
+            stack[-1]["text"] += line
 
     # Parse conversation thread
     project_key = list(result.keys())[0]
@@ -96,14 +103,31 @@ def parse_functions(content: str) -> List[Tuple[str, str, str, str, Optional[str
     matches = re.findall(pattern, content, re.DOTALL)
     return [(m[0].strip() or None, m[1], m[2], m[4], m[3] if m[3] else None) for m in matches]
 
-def apply_functions(document: dict, project_title: str, functions: List[Tuple[str, str, str, str,
-                                                                              Optional[str]]]) -> dict:
+def apply_functions(document: dict, functions: List[Tuple[str, str, str, str, Optional[str]]]) -> dict:
+    project_title = list(document.keys())[0]
     for filepath, function_name_start, input_a, function_name_end, input_b in functions:
         function_names = (function_name_start, function_name_end)
         if function_names == ("SEARCH", "REPLACE"):
-            # assert input_a in document[project_title]["Code Context"][filepath]["text"], "SEARCH string not found."
+            if input_a not in document[project_title]["Code Context"][filepath]["text"]:
+                print("SEARCH NOT FOUND:")
+                print(input_a)
+                print()
+                print("IN:")
+                print(document[project_title]["Code Context"][filepath]["text"])
+                print()
+                print("OUT:")
+                print(input_b)
+            assert input_a in document[project_title]["Code Context"][filepath]["text"], "SEARCH string not found."
             document[project_title]["Code Context"][filepath]["text"] = document[project_title]["Code Context"][
                 filepath]["text"].replace(input_a, input_b)
+            document[project_title]["Conversation Thread"][-1]["content"] = document[project_title][
+                "Conversation Thread"][-1]["content"].replace(
+                    input_a, "[Omitted for brevity. See latest version in Code Context.]")
+            document[project_title]["Conversation Thread"][-1]["content"] = document[project_title][
+                "Conversation Thread"][-1]["content"].replace(
+                    input_b, "[Omitted for brevity. See latest version in Code Context.]")
+
+            print("SEARCH/REPLACE OK", filepath)
         elif function_names == ("SEARCH_MISSION", "REPLACE_MISSION"):
             assert input_a in document[project_title]["Mission"]["text"], "SEARCH_MISSION string not found."
             document[project_title]["Mission"]["text"] = document[project_title]["Mission"]["text"].replace(
@@ -129,5 +153,5 @@ def test_unparse_markdown():
         assert f.read() == unparsed
 
 if __name__ == "__main__":
-    test_unparse_markdown()
+    # test_unparse_markdown()
     app()
